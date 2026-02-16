@@ -1,6 +1,6 @@
 {
   "name": "sdamgia-mcp-server",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "description": "MCP server for СДАМ ГИА educational platform - search and retrieve problems, tests, and solutions",
   "type": "module",
   "main": "dist/index.js",
