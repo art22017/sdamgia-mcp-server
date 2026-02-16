@@ -75,9 +75,23 @@ export function formatSearchResultsMarkdown(query, results, subject) {
     }
     output += `## Problem IDs\n\n`;
     results.forEach((result, index) => {
-        output += `${index + 1}. Problem ${result.id}`;
-        if (result.score !== undefined) {
-            output += ` (similarity: ${(result.score * 100).toFixed(1)}%)`;
+        // Handle both old format (id, score) and new format (problem_id, similarity, condition_start, etc.)
+        const id = result.problem_id || result.id || '';
+        const score = result.similarity !== undefined ? result.similarity : result.score;
+        output += `${index + 1}. Problem ${id}`;
+        if (score !== undefined) {
+            output += ` (similarity: ${(score * 100).toFixed(1)}%)`;
+        }
+        output += `\n`;
+        // Add condition preview if available
+        if (result.condition_start && result.condition_start.length > 0) {
+            output += `   **Start**: ${result.condition_start}...\n`;
+        }
+        if (result.condition_end && result.condition_end.length > 0) {
+            output += `   **End**: ...${result.condition_end}\n`;
+        }
+        if (result.answer && result.answer.length > 0) {
+            output += `   **Answer**: ${result.answer}\n`;
         }
         output += `\n`;
     });

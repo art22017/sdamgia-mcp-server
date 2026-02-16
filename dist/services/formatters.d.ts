@@ -18,8 +18,13 @@ export declare function formatCatalogMarkdown(catalog: Topic[]): string;
  * Format search results as markdown
  */
 export declare function formatSearchResultsMarkdown(query: string, results: Array<{
-    id: string;
+    id?: string;
     score?: number;
+    problem_id?: string;
+    similarity?: number;
+    condition_start?: string;
+    condition_end?: string;
+    answer?: string;
 }>, subject: string): string;
 /**
  * Format batch problems as markdown

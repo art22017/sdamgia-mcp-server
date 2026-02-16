@@ -258,53 +258,103 @@ A list of matching problems with:
     },
     async ({ subject, condition_text, threshold, limit, response_format }) => {
       try {
-        // First, do a broad search to get candidates
-        const searchResults = await client.searchProblems(subject, condition_text, Math.min(limit * 5, 50));
-        
+        // Try multiple search strategies to get candidates
+        let searchResults: string[] = [];
+
+        // Strategy 1: Search with the full condition text
+        searchResults = await client.searchProblems(subject, condition_text, Math.min(limit * 5, 50));
+
+        // Strategy 2: If few results, try with extracted keywords
+        if (searchResults.length < 5) {
+          // Extract key terms (remove parenthesized parts like ЧТО(БЫ))
+          const cleanText = condition_text.replace(/\([^)]*\)/g, ' ').replace(/\s+/g, ' ').trim();
+          const keywords = cleanText.split(' ').filter(w => w.length > 3).slice(0, 3);
+          for (const keyword of keywords) {
+            const keywordResults = await client.searchProblems(subject, keyword, 20);
+            searchResults = [...new Set([...searchResults, ...keywordResults])];
+            if (searchResults.length >= 30) break;
+          }
+        }
+
         if (searchResults.length === 0) {
           const output = formatResponse(
-            { problem_ids: [], total: 0, message: "No problems found" },
+            { matches: [], total: 0, message: "No problems found" },
             response_format,
             () => formatSearchResultsMarkdown(condition_text, [], subject)
           );
-          
+
           return {
             content: [{ type: "text", text: output }],
-            structuredContent: { problem_ids: [], total: 0 }
+            structuredContent: { matches: [], total: 0 }
           };
         }
 
         // Fetch problem details for fuzzy matching
         const problems = await Promise.all(
-          searchResults.slice(0, Math.min(30, limit * 3)).map(async id => {
+          searchResults.slice(0, Math.min(50, limit * 5)).map(async id => {
             try {
               const problem = await client.getProblemById(subject, id);
-              return { id, text: problem.condition.text };
+              return {
+                id,
+                text: problem.condition.text,
+                answer: problem.answer,
+                condition: problem.condition.text
+              };
             } catch {
               return null;
             }
           })
         );
 
-        const validProblems = problems.filter(p => p !== null) as Array<{ id: string; text: string }>;
-        
+        const validProblems = problems.filter(p => p !== null) as Array<{
+          id: string;
+          text: string;
+          answer: string;
+          condition: string;
+        }>;
+
         // Find best matches using fuzzy text matching
         const matches = findBestMatches(condition_text, validProblems, threshold, limit);
-        
+
+        // Fetch full details for matches to include in response
+        const enrichedMatches = await Promise.all(
+          matches.map(async (m) => {
+            try {
+              const problem = await client.getProblemById(subject, m.id);
+              const conditionText = problem.condition.text || '';
+              return {
+                problem_id: m.id,
+                similarity: m.score,
+                condition_start: conditionText.substring(0, 75),
+                condition_end: conditionText.slice(-75),
+                answer: problem.answer || ''
+              };
+            } catch {
+              return {
+                problem_id: m.id,
+                similarity: m.score,
+                condition_start: '',
+                condition_end: '',
+                answer: ''
+              };
+            }
+          })
+        );
+
         const output = formatResponse(
-          { 
-            matches: matches.map(m => ({ problem_id: m.id, similarity: m.score })),
-            total: matches.length 
+          {
+            matches: enrichedMatches,
+            total: enrichedMatches.length
           },
           response_format,
-          () => formatSearchResultsMarkdown(condition_text, matches, subject)
+          () => formatSearchResultsMarkdown(condition_text, enrichedMatches, subject)
         );
 
         return {
           content: [{ type: "text", text: output }],
-          structuredContent: { 
-            matches: matches.map(m => ({ problem_id: m.id, similarity: m.score })),
-            total: matches.length 
+          structuredContent: {
+            matches: enrichedMatches,
+            total: enrichedMatches.length
           }
         };
       } catch (error) {
