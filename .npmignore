@@ -1,0 +1,92 @@
+# Source files
+src/
+*.ts
+!*.d.ts
+
+# Tests
+test/
+*.test.js
+*.spec.js
+test_*.js
+
+# Development configs
+tsconfig.json
+.eslintrc
+.eslintrc.*
+.prettierrc
+.prettierrc.*
+.editorconfig
+
+# Build artifacts (keep dist for published package)
+# dist/ is included by default, only exclude if needed
+
+# Git files
+.git/
+.gitignore
+.gitattributes
+.gitmodules
+
+# IDE folders
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Temporary files
+node_modules/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+lerna-debug.log*
+*.tmp
+*.temp
+.cache/
+.parcel-cache/
+
+# Environment files
+.env
+.env.*
+!.env.example
+
+# Debug and development scripts
+debug-catalog.js
+debug-catalog-v2.js
+syntax-check.sh
+
+# Development documentation
+VERIFICATION_REPORT.md
+CHECKLIST.md
+ARCHITECTURE.md
+DIAGRAMS.md
+SUMMARY.md
+TESTING.md
+TOOL_ANALYSIS.md
+TOOL_QUICK_REFERENCE.md
+README_ARCHIVE.txt
+
+# CI/CD files
+.github/
+.gitlab-ci.yml
+.travis.yml
+.circleci/
+appveyor.yml
+
+# Coverage reports
+coverage/
+.nyc_output/
+*.lcov
+
+# Build tools
+webpack.config.js
+rollup.config.js
+gulpfile.js
+Gruntfile.js
+
+# Misc
+*.md
+!README.md
+!LICENSE
+!CHANGELOG.md
